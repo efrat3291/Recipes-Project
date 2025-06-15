@@ -1,8 +1,7 @@
-import { Model, Schema } from "mongoose";
-import bcrypt from 'bcrypt';
+import { model, Schema } from "mongoose";
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import joi from 'joi';
-import Joi from "joi";
+import Joi from 'joi';
 
 const userSchema = new Schema({
     name: {type: String, required: true, minlength: 2, maxlength: 30},
@@ -39,7 +38,7 @@ export const generateToken = (user) => {
     return token;
 }
 
-export const JoiUserSchema = joi.object({
+export const JoiUserSchema = Joi.object({
     register: Joi.object({
         username: Joi.string().min(2).max(30).required(),
         password: Joi.string()
@@ -62,5 +61,14 @@ export const JoiUserSchema = joi.object({
     })
 })
 
+export const JoiPasswordSchema = Joi.object({
+  password: Joi.string()
+    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"))
+    .required()
+    .messages({
+      "string.pattern.base": "Password must have minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character",
+      "any.required": "Password is required",
+    }),
+});
 
 export default model('users', userSchema);

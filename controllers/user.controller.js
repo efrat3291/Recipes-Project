@@ -1,6 +1,6 @@
 import Joi from "joi";
-import User, { generateToken, JoiUserSchema } from "../models/user.model.js";
-import bcrypt from 'bcrypt';
+import User, { generateToken, JoiPasswordSchema, JoiUserSchema } from "../models/user.model.js";
+import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req, res, next) => {
     try{
@@ -34,8 +34,8 @@ export const signIn = async (req, res, next) => {
         if(JoiUserSchema.login.validate(req.body).error){
             return next({message: "Invalid data", status: 400});
         }
-        const {userName, email, password, address} = req.body;
-        const user = await users.findOne({email});
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
         if(!user){
             return next({message: "User not found", status: 401});
         }
@@ -57,14 +57,14 @@ export const deleteUser = async (req, res, next) => {
         if(req.myUser._id !== id){
             return next({message: "No Access permission", status: 403}); 
         }
-        const user = await users.findByIdAndDelete(id);
+        const user = await User.findByIdAndDelete(id);
         if(!user){
             return next({message: "User not found", status: 404});
         }
         res.json({message: "User deleted successfully"});
     }
-    catch(err){
-        next({message: err.message});
+    catch(error){
+        next({message: error.message});
     }
 }
 
@@ -75,17 +75,19 @@ export const updateUser = async(req, res, next) => {
         if(req.myUser._id !== id){
             return next({message: "No Access permission", status: 403}); 
         }
-        if(JoiUserSchema.login.extract('password').validate(password).error){
-            return next({message: "Invalid password", status: 400});
+        const {error} = JoiPasswordSchema.validate({password});
+        if(error){
+            return next({message: error.message, status: 400});
         }
         const user = await User.findById(id);
         if(!user){
             return next({message: "User not found", status: 404});
         }
-        user.password = password;
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
         await user.save();
 
-        
+        res.status(204).end();        
     }catch(error){
         next({message: error.message});
     }
