@@ -1,4 +1,4 @@
-import User, { generateToken, JoiPasswordSchema, JoiUserSchema } from "../models/user.model.js";
+import User, { generateToken, JoiUserSchema } from "../models/user.model.js";
 import bcrypt from 'bcryptjs';
 
 export const getAllUsers = async (req, res, next) => {
@@ -17,11 +17,11 @@ export const signUp = async (req, res, next) => {
         if(valid.error){
             return next({message: valid.error, status: 400});
         }
-        const {userName, email, password, address} = valid.value;
-        const user = new User({userName, email, password, address});
+        const {username, email, password, address} = valid.value;
+        const user = new User({username, email, password, address});
         await user.save();
         const token = generateToken(user);
-        res.status(201).json({userName: user.userName, token})
+        res.status(201).json({username: user.username, token})
     }
     catch(error){
         next({message: error.message});

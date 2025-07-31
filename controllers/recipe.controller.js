@@ -77,8 +77,8 @@ export const getRecipeById = async (req, res, next) => {
 
 export const getRecipeByPreparingTime = async (req, res, next) => {
     try {
-        const { prepareTime } = req.body;
-        const recipes = await Recipe.find(r => r.prepareTime <= prepareTime);
+        const { prepareTime } = req.params;
+        const recipes = await Recipe.find({ prepareTime: { $lte: preparationTime } });
         res.status(200).json(recipes);
     } catch (error) {
         next({ message: error.message });
@@ -90,48 +90,43 @@ export const addRecipe = async (req, res, next) => {
         if (!req.myUser) {
             return next({ message: 'you must login to add a recipe', status: 403 });
         }
-        const { _id, userName } = req.myUser;
-        const  categories = req.body;
-        const categoryIdsAndNames = [];
-        const categoriesToUpdate = [];
+        const { _id: contributorId, username } = req.myUser;
 
-        for (const category in categories) {
-            const c  = await category.findOne({
-                desc: { $regex: new RegExp(`^${c}$`, i) }
+        const { categories, ...recipeData } = req.body; // שולפים את הקטגוריות ושאר הנתונים
+
+        const categoryIdsAndNames = [];
+
+        // עכשיו נעבור על מערך הקטגוריות שנשלח בבקשה
+        for (const categoryObj of categories) {
+            let existingCategory = await Category.findOne({
+                desc: new RegExp(`^${categoryObj.categoryName}$`, 'i')
             });
-            if (!c) {
-                c = new Category({ desc: c});
-                await c.save();
+
+            if (!existingCategory) {
+                existingCategory = new Category({ desc: categoryObj.categoryName });
+                await existingCategory.save();
             }
-            categoryIdsAndNames.push({_id: c._id, desc: c.desc });
-            categoriesToUpdate.push(c);
+
+            categoryIdsAndNames.push({ _id: existingCategory._id, categoryName: existingCategory.desc });
         }
 
-        const recipe = new Recipe({
-            ...req.body,
+        const newRecipe = new Recipe({
+            ...recipeData,
             contributor: {
-                _id,
-                name: userName
+                _id: contributorId,
+                name: username
             },
-            category: categoryIdsAndNames
+            categories: categoryIdsAndNames
         });
 
-        await recipe.save();
-        categoriesToUpdate.forEach(async(c) => {
-            c.recipesCount++;
-            c.recipesArr.push({
-                _id: recipe._id,
-                name: recipe.name,
-                desc: recipe.description,
-                contributor: userName
-            });
-            await c.save();
-        });
-        res.status(201).json(recipe);
+        await newRecipe.save();
+
+        res.status(201).json(newRecipe);
     } catch (error) {
-        next({ message: error.message });
+        next({ message: error.message, status: 500 });
     }
 };
+
 
 export const updateRecipe = async (req, res, next) => {
     try {

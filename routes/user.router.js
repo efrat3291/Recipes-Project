@@ -5,7 +5,7 @@ import Joi from "joi";
 
 const router = Router();
 
-router.get('/', checkAuth, checkIsAdmin, getAllUsers);
+router.get('/', getAllUsers);
 router.post('/sign-in', signIn);
 router.post('/', signUp);
 router.put('/:id', checkAuth, updateUser);

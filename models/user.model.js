@@ -36,7 +36,10 @@ userSchema.pre('save', async function () {
 })
 export const JoiUserSchema = {
     register: Joi.object({
-        username: Joi.string(),
+        username: Joi.string()
+            .min(2)
+            .max(30)
+            .required(),
         password: Joi.string()
             .min(8)
             .max(30)
@@ -47,9 +50,9 @@ export const JoiUserSchema = {
             .lowercase()
             .required(),
         address: Joi.object({
-            city: Joi.string(),
-            street: Joi.string(),
-            house: Joi.number()
+            city: Joi.string().allow(''),
+            street: Joi.string().allow(''),
+            house: Joi.number().default(0)
         }),
     }),
 

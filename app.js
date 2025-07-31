@@ -1,6 +1,6 @@
 import express from 'express';
 import userRouter from './routes/user.router.js';
-import recipeRouter from './routes/recipes.router.js';
+import recipeRouter from './routes/recipe.router.js';
 import { config } from 'dotenv';
 import { connectDB } from './config/db.js';
 import morgan from 'morgan';
