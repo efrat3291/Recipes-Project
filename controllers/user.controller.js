@@ -1,4 +1,3 @@
-import Joi from "joi";
 import User, { generateToken, JoiPasswordSchema, JoiUserSchema } from "../models/user.model.js";
 import bcrypt from 'bcryptjs';
 
