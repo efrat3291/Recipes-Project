@@ -3,8 +3,6 @@ import { getAllUsers, signIn, signUp, deleteUser, updateUser } from "../controll
 import { checkAuth, checkIsAdmin } from "../middlewares/auth.middleware.js";
 import Joi from "joi";
 
-const { checkPreferences } = Joi;
-
 const router = Router();
 
 router.get('/', checkAuth, checkIsAdmin, getAllUsers);

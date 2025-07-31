@@ -1,31 +1,26 @@
-import { model, Model, Schema } from "mongoose";
-import {data, required, string} from "joi";
-
-const layerSchema = new Schema({
-    description: { type: String, required: true },
-    ingredients: { type: [String], required: true }
-})
-
-const recipeSchema = new Scheama({
+import mongoose, { model, Schema } from "mongoose";
+const recipeSchema = new Schema({
     name: { type: String, required: true },
-    description: { type: String},
-    category: { type: [String]},
-    prepartionTime: { type: Number },
-    difficultyLevel: { type: Number, enum: [1,2,3,4,5], required: true },
-    addDate: { type: Date, default: Date.now },
-    layersArr: { 
+    desc: { type: String },
+    categories: [{
+        _id: { type: Schema.Types.ObjectId, ref: 'categories' },
+        categoryName: String
+    }],
+    preparationTime: { type: Number },
+    level: { type: Number, enum: [1, 2, 3, 4, 5] },
+    publicationDate: { type: Date, default: Date.now() },
+    layersArr: {
         type: [{
-            description: { type: String},
+            desc: { type: String },
             ingredients: { type: [String] }
-        }] 
+        }]
     },
-    instructionArr: { type: [String] },
+    instructionsArr: { type: [String] },
     img: { type: String },
-    isPrivate: { type: Boolean, default: false },
-    contributor: { 
-       _id: { type: Schema.Types.ObjectId, ref: 'users' },
-       name: String
+    isPrivate: { type: Boolean },
+    contributor: {
+        _id: { type: Schema.Types.ObjectId, ref: 'users' },
+        name: String
     }
 })
-export default model('recipes', recipeSchema);
-
+export default model('recipes', recipeSchema)

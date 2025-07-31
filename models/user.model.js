@@ -1,16 +1,9 @@
-import { model, Schema } from "mongoose";
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import Joi from 'joi';
-
+import mongoose, { model, Schema } from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import Joi from "joi";
 const userSchema = new Schema({
-    name: {type: String, required: true, minlength: 2, maxlength: 30},
-    email: {
-        type: String, 
-        required: true, 
-        unique: true,
-        match: [/^[\w-\.]+@([\w-]+\.)+(com|net)$/]
-    },
+    username: { type: String, required: true, minLength: 2, maxlength: 30 },
     password: {
         type: String,
         required: true,
@@ -18,57 +11,51 @@ const userSchema = new Schema({
             validator: v => /^[a-zA-Z0-9]{8,30}$/.test(v),
         }
     },
-    address: {
-        city: String,
-        street: String,
-        house: Number
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        match: [/^[\w-\.]+@([\w-]+\.)+(com|net)$/]
     },
-    role: {type: String, enum: ['user', 'admin'], default: 'user'},
-})
-
-userSchema.pre('sava', async function(){
+    address: {
+        city: { type: String, default: '' },
+        street: { type: String, default: '' },
+        house: { type: Number, default: 0 },
+    },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+});
+export const generateToken = (user) => {
+    const secretKey = process.env.JWT_SECRET || 'JWT_SECRET';
+    const token = jwt.sign({ _id: user._id, role: user.role }, secretKey, { expiresIn: '24h' });
+    return token;
+}
+userSchema.pre('save', async function () {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(this.password, salt);
     this.password = hash;
 })
-
-export const generateToken = (user) => {
-    const secretKey = process.env.JWT_SECRET_KEY || 'JWT_SECRET_KEY';
-    const token = jwt.sign({ _id: user._id, role: user.role }, secretKey, { expiresIn: '24h' });
-    return token;
-}
-
-export const JoiUserSchema = Joi.object({
+export const JoiUserSchema = {
     register: Joi.object({
-        username: Joi.string().min(2).max(30).required(),
+        username: Joi.string(),
         password: Joi.string()
-                .min(8) 
-                .max(30)
-                .pattern(/^[a-zA-Z0-9]+$/)  
-                .required(),
+            .min(8)
+            .max(30)
+            .pattern(/^[a-zA-Z0-9]+$/)
+            .required(),
         email: Joi.string()
-              .email()
-              .lowercase()
-              .required()        
-}),
-    login: Joi.object({
-        email: Joi.string()
-              .email()
-              .lowercase()
-              .required(),
-        password: Joi.string() 
-                .required(),
-    })
-})
-
-export const JoiPasswordSchema = Joi.object({
-  password: Joi.string()
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"))
-    .required()
-    .messages({
-      "string.pattern.base": "Password must have minimum eight characters, at least one uppercase letter, one lowercase letter, one number and one special character",
-      "any.required": "Password is required",
+            .email()
+            .lowercase()
+            .required(),
+        address: Joi.object({
+            city: Joi.string(),
+            street: Joi.string(),
+            house: Joi.number()
+        }),
     }),
-});
 
-export default model('users', userSchema);
+    login: Joi.object({
+        email: Joi.string().lowercase().required(),
+        password: Joi.string().required()
+    })
+};
+export default model('users', userSchema)
